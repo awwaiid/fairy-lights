@@ -1,8 +1,9 @@
 
 // Ideas:
-//   * Snake Stripes! Make it so that every 3-4 segments they have a different color stripe. These could start at like segment 8 to show that they are an adult
-//   * Max snake length?
+//   * DONE Snake Stripes! Make it so that every 3-4 segments they have a different color stripe. These could start at like segment 8 to show that they are an adult
+//   * DONE (via world reset) Max snake length?
 //   * Big snakes are slower than small snakes
+//   * Dead snakes turn a color and get eaten one segment at a time
 
 
 using namespace std;
@@ -25,7 +26,8 @@ void addSnake(vector<Snake> *snakes) {
   s1.head_color = strip.ColorHSV(random(65536));
   uint32_t body_base_color = random(65536);
   s1.body_color = strip.ColorHSV(body_base_color);
-  s1.stripe_color = strip.ColorHSV((body_base_color + 10000) % 65535);
+  // s1.stripe_color = strip.ColorHSV((body_base_color + 10000) % 65535);
+  s1.stripe_color = strip.ColorHSV(random(65536));
   s1.direction = random(2);
   s1.head_location = random(200);
   s1.body_min = s1.head_location;
@@ -257,7 +259,7 @@ void loop() {
 
   // forwardSnake();
   // reverseSnake();
-  // allPixelsAllColors();
+  allPixelsAllColors();
   // snakesCollide();
 
 
@@ -292,36 +294,55 @@ void loop() {
       addSnake(&snakes);
     }
 
-    Serial.println("Looping through snakes...");
-    for (auto i = 0; i < snakes.size(); i++) {  
-      Serial.println("Next Snake");
+    // Serial.println("Looping through snakes...");
+    for (auto i = 0; i < snakes.size(); i++) {
+      // Serial.println("Next Snake");
       snakes[i].step(tick);
     }
 
-    for (auto i = 0; i < snakes.size(); i++) {  
+    for (auto i = 0; i < snakes.size(); i++) {
       for (auto j = i + 1; j < snakes.size(); j++) {
-        Serial.println("Collision check");
+        // Serial.println("Collision check");
         if (snakes[i].collidesWith(&snakes[j])) {
           Serial.println(" ... COLLISION DETECTED");
+          Serial.print("Snake i: ");
+          snakes[i].print();
+          Serial.print("Snake j: ");
+          snakes[j].print();
           if (random(snakes[i].length + snakes[j].length) <= snakes[i].length) {
           // if (random(2) == 0) {
             // snakes[i].length += 1; // snakes[j].length;
             snakes[i].length += snakes[j].length;
             snakes.erase(snakes.begin() + j);
+            Serial.printf("Snake i wins! ");
+            snakes[i].print();
+            Serial.println("Continuing with next sub-snake");
           } else {
+            Serial.printf("Second snake wins before/after:\n");
+            snakes[j].print();
             // snakes[j].length += 1; // snakes[i].length;
             snakes[j].length += snakes[i].length;
+
+            Serial.printf("Snake j wins! ");
+            snakes[j].print();
+
             snakes.erase(snakes.begin() + i);
-            j = i + 1; // Since the "current" snake is eaten, start over looking for collisions
+            i--;
+            Serial.println("Resetting to previous snake");
+            break;
+            // j = i + 1; // Since the "current" snake is eaten, start over looking for collisions
             // break;
           }
         }
       }
 
       // snakes[i].print();
+    }
+
+    for (auto i = 0; i < snakes.size(); i++) {
       snakes[i].draw();
     }
-    Serial.println("Done looping through snakes.");
+    // Serial.println("Done looping through snakes.");
 
 
     strip.show();

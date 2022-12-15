@@ -21,7 +21,7 @@ class Snake {
   }
 
   void print() {
-    Serial.printf("Snake @ %d (%d-%d) %d\n", head_location, body_max, body_min, direction);
+    Serial.printf("Snake @ %d (%d-%d:%d) %d\n", head_location, body_min, body_max, length, direction);
   }
 
   int wrap(int loc) {
@@ -85,8 +85,8 @@ class Snake {
         || (body_max >= other->body_min && body_min <= other->body_min));
 
     } else {
-      return ((body_max <= other->body_max && body_min >= other->body_max)
-        || (body_max <= other->body_min && body_min >= other->body_min));
+      return ((body_max >= other->body_max || body_min <= other->body_max)
+        || (body_max >= other->body_min || body_min <= other->body_min));
     }
     // TODO deal with wrap around
     //    A------------B
