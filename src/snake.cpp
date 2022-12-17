@@ -2,6 +2,9 @@
 
 class Snake {
   public:
+
+  enum class Health {alive, death_rattle, dead};
+
   int head_location = 0;
   int body_max = 0;
   int body_min = 0;
@@ -12,6 +15,8 @@ class Snake {
   uint32_t body_color;
   uint32_t stripe_color;
   Adafruit_NeoPixel *strip;
+  Health health = Health::alive;
+  int death_fade_steps = 0;
 
   Snake(Adafruit_NeoPixel *strip) {
     this->strip = strip;
@@ -31,35 +36,59 @@ class Snake {
     return loc % strip->numPixels();
   }
 
+  void die() {
+    health = Health::death_rattle;
+    death_fade_steps = 128;
+  }
+
   void step(int t) {
     // Serial.println("Step");
     // Serial.println(t);
-    if (t % speed == 0) {
-      if (direction) {
-        head_location = wrap(head_location + 1);
-        if (head_location >= wrap(body_max + 1)) {
-          body_max = head_location;
-        } else {
-          body_min = head_location;
-        }
-        if (wrap(head_location - length) >= wrap(body_min + 1)) {
-          body_min = wrap(head_location - length);
-        }
+    if (health == Health::death_rattle) {
+      if (death_fade_steps > 0) {
+        death_fade_steps--;
+        uint32_t death_color = strip->Color(
+            death_fade_steps * 2,
+            death_fade_steps * 2,
+            death_fade_steps * 2
+        );
+        head_color = death_color;
+        body_color = death_color;
+        stripe_color = death_color;
       } else {
-        head_location = wrap(head_location - 1);
-        if (head_location <= wrap(body_min - 1)) {
-          body_min = head_location;
+        health = Health::dead;
+      }
+    } else {
+      if (t % speed == 0) {
+        if (direction) {
+          head_location = wrap(head_location + 1);
+          if (head_location >= wrap(body_max + 1)) {
+            body_max = head_location;
+          } else {
+            body_min = head_location;
+          }
+          if (wrap(head_location - length) >= wrap(body_min + 1)) {
+            body_min = wrap(head_location - length);
+          }
         } else {
-          body_max = head_location;
-        }
-        if (wrap(head_location + length) <= wrap(body_max - 1)) {
-          body_max = wrap(head_location + length);
+          head_location = wrap(head_location - 1);
+          if (head_location <= wrap(body_min - 1)) {
+            body_min = head_location;
+          } else {
+            body_max = head_location;
+          }
+          if (wrap(head_location + length) <= wrap(body_max - 1)) {
+            body_max = wrap(head_location + length);
+          }
         }
       }
     }
   }
-  
+
   void draw() {
+    if (health == Health::dead) {
+      return;
+    }
     int range = wrap(body_max - body_min);
     for (int i = 0; i < range; i++) {
       if (i % 6 >= 5) {
@@ -67,10 +96,8 @@ class Snake {
       } else {
         strip->setPixelColor(wrap(i + body_min), body_color);
       }
-      // Serial.printf("SetPixel body %d %d\n", i + body_min, body_color);
     }
     strip->setPixelColor(head_location, head_color);
-    // Serial.printf("SetPixel head %d\n", head_location);
   }
 
   void jumpTo(int location) {
@@ -80,18 +107,25 @@ class Snake {
   }
 
   bool collidesWith(Snake *other) {
+    if (
+        health == Health::death_rattle
+        || health == Health::dead
+        || other->health == Health::death_rattle
+        || other->health == Health::dead) {
+      // Ghost snakes do not collide
+      return false;
+    }
     if (body_max >= body_min) {
-      return ((body_max >= other->body_max && body_min <= other->body_max)
+      return
+          ((body_max >= other->body_max && body_min <= other->body_max)
         || (body_max >= other->body_min && body_min <= other->body_min));
 
     } else {
-      return ((body_max >= other->body_max || body_min <= other->body_max)
+      // This is when we wrap-around, everything is backwards
+      // .... kinda
+      return
+          ((body_max >= other->body_max || body_min <= other->body_max)
         || (body_max >= other->body_min || body_min <= other->body_min));
     }
-    // TODO deal with wrap around
-    //    A------------B
-    //          X-------------Y
-    //       X------Y
-    // X--------Y
   }
 };

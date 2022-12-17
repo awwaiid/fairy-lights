@@ -259,7 +259,7 @@ void loop() {
 
   // forwardSnake();
   // reverseSnake();
-  allPixelsAllColors();
+  // allPixelsAllColors();
   // snakesCollide();
 
 
@@ -276,6 +276,7 @@ void loop() {
 //  snakeBounce();
 
   vector<Snake> snakes;
+  vector<Snake> dead_snakes;
   addSnake(&snakes);
 
   while (1) {
@@ -286,12 +287,18 @@ void loop() {
     for (auto i = 0; i < snakes.size(); i++) {
       if (snakes[i].length >= 200) {
         snakes.clear();
+        dead_snakes.clear();
       }
     }
 
     // BABY SNAKES
     if(random(100) == 0) {
       addSnake(&snakes);
+    }
+
+    for (auto i = 0; i < dead_snakes.size(); i++) {
+      // Serial.println("Next Snake");
+      dead_snakes[i].step(tick);
     }
 
     // Serial.println("Looping through snakes...");
@@ -313,6 +320,8 @@ void loop() {
           // if (random(2) == 0) {
             // snakes[i].length += 1; // snakes[j].length;
             snakes[i].length += snakes[j].length;
+            snakes[j].die();
+            dead_snakes.push_back(snakes[j]);
             snakes.erase(snakes.begin() + j);
             Serial.printf("Snake i wins! ");
             snakes[i].print();
@@ -326,6 +335,8 @@ void loop() {
             Serial.printf("Snake j wins! ");
             snakes[j].print();
 
+            snakes[i].die();
+            dead_snakes.push_back(snakes[i]);
             snakes.erase(snakes.begin() + i);
             i--;
             Serial.println("Resetting to previous snake");
@@ -337,6 +348,10 @@ void loop() {
       }
 
       // snakes[i].print();
+    }
+
+    for (auto i = 0; i < dead_snakes.size(); i++) {
+      dead_snakes[i].draw();
     }
 
     for (auto i = 0; i < snakes.size(); i++) {
