@@ -12,7 +12,8 @@ using namespace std;
 #include <Adafruit_NeoPixel.h>
 #include "snake.cpp"
 
-#define LED_PIN 6
+// #define LED_PIN 6
+#define LED_PIN A3
 #define LED_COUNT 200
 Adafruit_NeoPixel strip(LED_COUNT, LED_PIN, NEO_GRB + NEO_KHZ800);
 
@@ -23,7 +24,8 @@ int tick = 0;
 void addSnake(vector<Snake> *snakes) {
   Serial.println("Adding a snake!");
   Snake s1 = Snake(&strip);
-  s1.head_color = strip.ColorHSV(random(65536));
+  // s1.head_color = strip.ColorHSV(random(65536));
+  s1.head_color = strip.Color(255, 0, 0);
   uint32_t body_base_color = random(65536);
   s1.body_color = strip.ColorHSV(body_base_color);
   // s1.stripe_color = strip.ColorHSV((body_base_color + 10000) % 65535);
@@ -235,46 +237,7 @@ void theaterChaseRainbow(int wait) {
   }
 }
 
-void setup() {
-  randomSeed(analogRead(0));
-  Serial.begin(9600);
-  strip.begin();
-  strip.show();
-  strip.setBrightness(128);
-}
-
-void loop() {
-  // Fill along the length of the strip in various colors...
-  // colorWipe(strip.Color(128, 0, 32), 20); // Red
-  // colorWipe(strip.Color(  0, 255,   0), 0); // Green
-  // colorWipe(strip.Color(  0,   0, 255), 0); // Blue
-
-  // Do a theater marquee effect in various colors...
-  // theaterChase(strip.Color(127, 127, 127), 500); // White, half brightness
-  // theaterChase(strip.Color(127,   0,   0), 50); // Red, half brightness
-  // theaterChase(strip.Color(  0,   0, 127), 50); // Blue, half brightness
-
-  // rainbow(50);             // Flowing rainbow cycle along the whole strip
-  // theaterChaseRainbow(50); // Rainbow-enhanced theaterChase variant
-
-  // forwardSnake();
-  // reverseSnake();
-  // allPixelsAllColors();
-  // snakesCollide();
-
-
-  // for (int i = 0; i < strip.numPixels(); i++) {
-  //   strip.clear();
-  //   drawSnake(i, strip.ColorHSV(23000), 5, 0);
-  //   drawSnake(i, strip.ColorHSV(0), 1, 0);
-  //   strip.show();
-  //   delay(1000);
-  // }
-
-  // delay(10);
-
-//  snakeBounce();
-
+void snakeSurvival() {
   vector<Snake> snakes;
   vector<Snake> dead_snakes;
   addSnake(&snakes);
@@ -284,10 +247,11 @@ void loop() {
     strip.clear();
 
     // End of the world
-    for (auto i = 0; i < snakes.size(); i++) {
+    for (auto i = 0u; i < snakes.size(); i++) {
       if (snakes[i].length >= 200) {
         snakes.clear();
         dead_snakes.clear();
+        return;
       }
     }
 
@@ -296,18 +260,18 @@ void loop() {
       addSnake(&snakes);
     }
 
-    for (auto i = 0; i < dead_snakes.size(); i++) {
+    for (auto i = 0u; i < dead_snakes.size(); i++) {
       // Serial.println("Next Snake");
       dead_snakes[i].step(tick);
     }
 
     // Serial.println("Looping through snakes...");
-    for (auto i = 0; i < snakes.size(); i++) {
+    for (auto i = 0u; i < snakes.size(); i++) {
       // Serial.println("Next Snake");
       snakes[i].step(tick);
     }
 
-    for (auto i = 0; i < snakes.size(); i++) {
+    for (auto i = 0u; i < snakes.size(); i++) {
       for (auto j = i + 1; j < snakes.size(); j++) {
         // Serial.println("Collision check");
         if (snakes[i].collidesWith(&snakes[j])) {
@@ -350,11 +314,11 @@ void loop() {
       // snakes[i].print();
     }
 
-    for (auto i = 0; i < dead_snakes.size(); i++) {
+    for (auto i = 0u; i < dead_snakes.size(); i++) {
       dead_snakes[i].draw();
     }
 
-    for (auto i = 0; i < snakes.size(); i++) {
+    for (auto i = 0u; i < snakes.size(); i++) {
       snakes[i].draw();
     }
     // Serial.println("Done looping through snakes.");
@@ -363,6 +327,37 @@ void loop() {
     strip.show();
     delay(50);
   }
+}
 
+void setup() {
+  randomSeed(analogRead(0));
+  Serial.begin(9600);
+  strip.begin();
+  strip.show();
+  strip.setBrightness(128);
+}
+
+void loop() {
+  // Fill along the length of the strip in various colors...
+  // colorWipe(strip.Color(128, 0, 32), 20); // Red
+  // colorWipe(strip.Color(  0, 255,   0), 0); // Green
+  // colorWipe(strip.Color(  0,   0, 255), 0); // Blue
+
+  // Do a theater marquee effect in various colors...
+  // theaterChase(strip.Color(127, 127, 127), 500); // White, half brightness
+  // theaterChase(strip.Color(127,   0,   0), 50); // Red, half brightness
+  // theaterChase(strip.Color(  0,   0, 127), 50); // Blue, half brightness
+
+  // rainbow(50);             // Flowing rainbow cycle along the whole strip
+  // theaterChaseRainbow(50); // Rainbow-enhanced theaterChase variant
+
+  // allPixelsAllColors();
   // allPixelsFade();
+
+  // forwardSnake();
+  // reverseSnake();
+  // snakesCollide();
+  // snakeBounce();
+  snakeSurvival();
+
 }

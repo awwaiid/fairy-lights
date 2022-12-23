@@ -11,6 +11,7 @@ class Snake {
   int length = 7;
   int direction = 1;
   int speed = 5;
+  int speed_step = 0;
   uint32_t head_color;
   uint32_t body_color;
   uint32_t stripe_color;
@@ -44,6 +45,7 @@ class Snake {
   void step(int t) {
     // Serial.println("Step");
     // Serial.println(t);
+    speed_step = t % speed;
     if (health == Health::death_rattle) {
       if (death_fade_steps > 0) {
         death_fade_steps--;
@@ -91,13 +93,27 @@ class Snake {
     }
     int range = wrap(body_max - body_min);
     for (int i = 0; i < range; i++) {
-      if (i % 6 >= 5) {
+      int stripe_offset = i;
+      if (direction) {
+        stripe_offset = range - i - 1;
+      }
+      if (stripe_offset % 6 >= 5) {
         strip->setPixelColor(wrap(i + body_min), stripe_color);
       } else {
         strip->setPixelColor(wrap(i + body_min), body_color);
       }
     }
     strip->setPixelColor(head_location, head_color);
+
+    // Attempt at fading into the direction we're going more smoothly
+    // uint8_t r = (speed - speed_step) * ((head_color >> 16) & 255 / speed);
+    // uint8_t g = (speed - speed_step) * ((head_color >> 8) & 255 / speed);
+    // uint8_t b = (speed - speed_step) * (head_color & 255 / speed);
+    // if(direction) {
+    //   strip->setPixelColor(wrap(head_location+1), strip->Color(r, g, b));
+    // } else {
+    //   strip->setPixelColor(wrap(head_location-1), strip->Color(r, g, b));
+    // }
   }
 
   void jumpTo(int location) {
