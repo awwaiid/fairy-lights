@@ -10,7 +10,18 @@ using namespace std;
 #include <Arduino.h>
 #include <vector>
 #include <Adafruit_NeoPixel.h>
+#include <WiFi.h>
+
+// #include <LinkedList.h>
+// #include <GaussianAverage.h>
+
 #include "snake.cpp"
+
+const char* ssid = "wifi.42t.org";
+const char* password = "";
+WiFiServer server(80);
+// Variable to store the HTTP request
+String header;
 
 // #define LED_PIN 6
 #define LED_PIN A3
@@ -329,6 +340,60 @@ void snakeSurvival() {
   }
 }
 
+float randomGaussian() {
+  float rg = 0;
+  for (int i = 0; i < 10; i++) rg += random(1001);
+  float r = (rg - 5000) / 5000.0;
+  return r;
+}
+
+void candles() {
+
+  int min_brightness = 50;
+  int max_brightness = 150;
+  int brightness_step = 1;
+
+  // vector<int> target_brightness;
+  vector<int> current_value;
+
+  uint32_t base_color = strip.ColorHSV(2000, 255, 50);
+
+  // Set up initial targets
+  for (auto i = 0u; i < LED_COUNT; i++) {
+    current_value.push_back(min_brightness);
+    // target_brightness.push_back(random(256));
+    // current_brightness.push_back(0);
+  }
+
+  // strip.clear();
+  strip.setBrightness(128);
+
+  while (1) {
+    tick++;
+
+    // End of the world
+    for (auto i = 0u; i < LED_COUNT; i++) {
+      // float n = std::normal_distribution<float>(0, 5);
+      current_value[i] += random(-5, 5);
+      // int walk = static_cast<int>(randomGaussian() * 20);
+      // current_value[i] += walk;
+      // Serial.printf("walk: %d current_value[i]: %d\n", walk, current_value[i]);
+      if (current_value[i] < min_brightness) {
+        current_value[i] = min_brightness;
+      }
+      if (current_value[i] > max_brightness) {
+        current_value[i] = max_brightness;
+      }
+      // strip.setPixelColor(i, strip.ColorHSV(2000, 255-(current_value[i]/20), current_value[i]));
+      // strip.setPixelColor(i, strip.ColorHSV(2000, 255-(current_value[i]/20), current_value[i]));
+      strip.setPixelColor(i, strip.ColorHSV(2000, 255, current_value[i]));
+    }
+
+    strip.show();
+    delay(5);
+  }
+}
+
 void setup() {
   randomSeed(analogRead(0));
   Serial.begin(9600);
@@ -359,5 +424,6 @@ void loop() {
   // snakesCollide();
   // snakeBounce();
   snakeSurvival();
+  // candles();
 
 }
